@@ -2,7 +2,7 @@
 # Base stage                                                                 #
 ##############################################################################
 ARG DISTRO=debian
-ARG IMAGE_VERSION=bullseye
+ARG IMAGE_VERSION=bookworm
 ARG IMAGE_VARIANT=slim
 FROM $DISTRO:$IMAGE_VERSION-$IMAGE_VARIANT AS postgis-base
 LABEL maintainer="Tim Sutton<tim@kartoza.com>"
@@ -26,7 +26,7 @@ RUN set -eux \
         apt-transport-https curl gettext \
     && dpkg-divert --local --rename --add /sbin/initctl
 
-RUN apt-get -y update; apt-get -y install build-essential autoconf  libxml2-dev zlib1g-dev netcat gdal-bin \
+RUN apt-get -y update; apt-get -y install build-essential autoconf  libxml2-dev zlib1g-dev netcat-traditional gdal-bin \
     figlet toilet
 
 # Generating locales takes a long time. Utilize caching by runnig it by itself
@@ -35,11 +35,11 @@ RUN apt-get -y update; apt-get -y install build-essential autoconf  libxml2-dev 
 # Generate all locale only on deployment mode build
 # Set to empty string to generate only default locale
 ARG GENERATE_ALL_LOCALE=1
-ARG LANGS="en_US.UTF-8,id_ID.UTF-8"
-ARG LANG=en_US.UTF-8
-ENV LANG=en_US.UTF-8 \
-    LANGUAGE=en_US:en \
-    LC_ALL=en_US.UTF-8
+ARG LANGS="en_US.UTF-8,en_GB.UTF-8,fr_FR.UTF-8"
+ARG LANG=fr_FR.UTF-8
+ENV LANG=fr_FR.UTF-8 \
+    LANGUAGE=fr_FR:en \
+    LC_ALL=fr_FR.UTF-8
 
 COPY ./base_build/scripts/locale.gen /etc/all.locale.gen
 COPY ./base_build/scripts/locale-filter.sh /etc/locale-filter.sh
@@ -73,7 +73,7 @@ ARG POSTGIS_MAJOR_VERSION=3
 ARG POSTGIS_MINOR_RELEASE=2
 ARG TIMESCALE_VERSION=2-2.7.2
 ARG BUILD_TIMESCALE=false
-
+ARG BUILD_SFCGAL=true
 
 
 RUN set -eux \
@@ -98,7 +98,7 @@ RUN set -eux \
     && apt-get -y --no-install-recommends install postgresql-client-${POSTGRES_MAJOR_VERSION} \
         postgresql-common postgresql-${POSTGRES_MAJOR_VERSION} \
         postgresql-${POSTGRES_MAJOR_VERSION}-postgis-${POSTGIS_MAJOR_VERSION} \
-        netcat postgresql-${POSTGRES_MAJOR_VERSION}-ogr-fdw \
+        netcat-traditional postgresql-${POSTGRES_MAJOR_VERSION}-ogr-fdw \
         postgresql-${POSTGRES_MAJOR_VERSION}-postgis-${POSTGIS_MAJOR_VERSION}-scripts \
         postgresql-plpython3-${POSTGRES_MAJOR_VERSION} postgresql-${POSTGRES_MAJOR_VERSION}-pgrouting \
         postgresql-server-dev-${POSTGRES_MAJOR_VERSION} postgresql-${POSTGRES_MAJOR_VERSION}-cron \
@@ -113,6 +113,14 @@ RUN if [ "${BUILD_TIMESCALE}" = "true" ]; then \
         apt-get -y --no-install-recommends install timescaledb-${TIMESCALE_VERSION}-postgresql-${POSTGRES_MAJOR_VERSION} timescaledb-tools;\
     fi;
 
+# sfcgal
+RUN echo "sfcgal installation ..."
+RUN if [ "${BUILD_SFCGAL}" = "true" ]; then \
+       export DEBIAN_FRONTEND=noninteractive && \
+       apt-get update && \
+       apt-get install -y libsfcgal1;\
+    fi;
+
 RUN  echo $POSTGRES_MAJOR_VERSION >/tmp/pg_version.txt
 RUN  echo $POSTGIS_MAJOR_VERSION >/tmp/pg_major_version.txt
 RUN  echo $POSTGIS_MINOR_RELEASE >/tmp/pg_minor_version.txt
@@ -122,7 +130,7 @@ ENV \
 
 RUN wget -O- https://github.com/pgpointcloud/pointcloud/archive/master.tar.gz | tar xz && \
 cd pointcloud-master && \
-./autogen.sh && ./configure && make -j 4 && make install && \
+./autogen.sh && ./configure && make -j 16 && make install && \
 cd .. && rm -Rf pointcloud-master
 
 # Cleanup resources
@@ -142,7 +150,7 @@ RUN chmod +x *.sh
 # this dockerfile directly.
 RUN set -eux \
     && /scripts/setup.sh;rm /scripts/.pass_*
-RUN echo 'figlet -t "Kartoza Docker PostGIS"' >> ~/.bashrc
+RUN echo 'figlet -t "G2OI Docker PostGIS"' >> ~/.bashrc
 VOLUME /var/lib/postgresql
 
 ENTRYPOINT /scripts/docker-entrypoint.sh
