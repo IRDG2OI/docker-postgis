@@ -15,7 +15,7 @@ source /scripts/setup-ssl.sh
 
 source /scripts/setup-pg_hba.sh
 # Function to add figlet
-figlet -t "Kartoza Docker PostGIS"
+figlet -t "G2OI Docker PostGIS"
 
 
 if [[ -f /scripts/.pass_20.txt ]]; then
