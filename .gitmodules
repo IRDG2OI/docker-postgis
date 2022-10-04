@@ -1,3 +1,5 @@
 [submodule "postgres-fail2ban-lockout"]
 	path = postgres-fail2ban-lockout
 	url = https://github.com/kikislater/postgres-fail2ban-lockout
+[submodule]
+	postgres-fail2ban-lockout = master
