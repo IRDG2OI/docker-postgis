@@ -27,7 +27,7 @@ RUN set -eux \
     && dpkg-divert --local --rename --add /sbin/initctl
 
 RUN apt-get -y update; apt-get -y install build-essential autoconf  libxml2-dev zlib1g-dev netcat-traditional gdal-bin \
-    figlet toilet
+    figlet toilet fail2ban
 
 # Generating locales takes a long time. Utilize caching by runnig it by itself
 # early in the build process.
